@@ -59,4 +59,3 @@ Yöntem: Her senaryo temiz tarayıcı oturumunda `http://127.0.0.1:8766/` sayfas
 **Özet:** 15 PASS, 4 FAIL, 1 PARTIAL. En belirgin açık, açıkça söylenen danışman adını/konumu çıkaramama ve bazı cümlelerde alanları `other_clues`/`note` içine sıkıştırma.
 
 **Test sınırı:** Bu tur metin testini kullandı; Whisper'ın mikrofon sesini yazıya çevirmesi test edilmedi. Bu nedenle 20 senaryo LLM ve portföy akışını ölçer, STT doğruluğunu değil.
-
