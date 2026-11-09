@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Emlak telefon asistanı prototipinin çağrı akışı, servisleri ve iyileştirme önerileri.">
+  <title>Bir çağrının yolculuğu — Emlak Telefon Asistanı</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #142327;
+      --muted: #586a68;
+      --paper: #f4f4eb;
+      --surface: #fffef8;
+      --line: #d5ded2;
+      --green: #176c4e;
+      --lime: #c9ec71;
+      --blue: #3e65c5;
+      --orange: #d76c3f;
+      --shadow: 0 18px 50px #18352c14;
+      font: 16px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      scroll-behavior: smooth;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    a { color: inherit; }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; padding:22px 0; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:10px; text-decoration:none; font-weight:760; letter-spacing:-.02em; }
+    .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:11px; background:var(--green); color:var(--lime); font-size:19px; }
+    .top-link { text-decoration:none; color:var(--green); font-weight:700; font-size:.92rem; }
+    .hero { display:grid; grid-template-columns:1.08fr .92fr; gap:44px; align-items:center; padding:66px 0 52px; }
+    .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.13em; font-size:.76rem; font-weight:800; }
+    h1 { margin:12px 0 16px; max-width:690px; font-size:clamp(2.8rem, 6vw, 5.4rem); line-height:.99; letter-spacing:-.065em; }
+    h1 em { color:var(--green); font-style:normal; }
+    .hero-copy { color:var(--muted); max-width:600px; font-size:1.11rem; }
+    .hero-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:26px; }
+    .button { display:inline-flex; align-items:center; gap:9px; border-radius:999px; padding:12px 18px; text-decoration:none; background:var(--ink); color:white; font-weight:720; }
+    .button.secondary { background:transparent; border:1px solid #a8b7ab; color:var(--ink); }
+    .hero-visual { position:relative; min-height:355px; border-radius:28px; overflow:hidden; background:#17372f; box-shadow:var(--shadow); padding:25px; color:#f7f8ec; }
+    .hero-visual::before { content:""; position:absolute; width:300px; height:300px; border-radius:50%; right:-70px; top:-98px; background:#c9ec7130; }
+    .hero-visual::after { content:""; position:absolute; width:230px; height:230px; border-radius:50%; left:-130px; bottom:-150px; background:#7ebca14a; }
+    .visual-top { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1; color:#bdd3c8; font-size:.78rem; text-transform:uppercase; letter-spacing:.12em; }
+    .live-dot { display:inline-flex; align-items:center; gap:8px; color:var(--lime); font-weight:750; }
+    .live-dot::before { content:""; width:8px; height:8px; background:var(--lime); border-radius:50%; box-shadow:0 0 0 5px #c9ec7122; }
+    .wave { position:relative; z-index:1; display:flex; align-items:center; gap:5px; height:125px; margin:20px 0 16px; }
+    .wave i { display:block; width:5px; border-radius:9px; background:var(--lime); opacity:.92; animation:pulse 1s ease-in-out infinite alternate; }
+    .wave i:nth-child(3n) { animation-delay:.25s; }
+    .wave i:nth-child(4n) { animation-delay:.48s; }
+    @keyframes pulse { from { transform:scaleY(.45); opacity:.55; } to { transform:scaleY(1); opacity:1; } }
+    .quote-card { position:relative; z-index:1; background:#fffef8; color:var(--ink); border-radius:16px; padding:17px 19px; width:min(100%, 380px); box-shadow:0 12px 28px #071d1833; }
+    .quote-card small { display:block; color:var(--green); font-weight:800; text-transform:uppercase; letter-spacing:.1em; margin-bottom:5px; }
+    .quote-card strong { font-size:1.06rem; line-height:1.4; }
+    .visual-caption { position:absolute; z-index:1; right:24px; bottom:25px; color:#b8cec4; font-size:.78rem; }
+    .section { padding:48px 0; }
+    .section-head { display:flex; justify-content:space-between; gap:28px; align-items:end; margin-bottom:24px; }
+    h2 { font-size:clamp(1.8rem, 3.5vw, 2.8rem); line-height:1.08; letter-spacing:-.045em; margin:7px 0 0; }
+    .section-head p { max-width:440px; color:var(--muted); margin:0; }
+    .legend { display:flex; gap:12px; flex-wrap:wrap; margin:0 0 18px; color:var(--muted); font-size:.85rem; }
+    .legend span { display:inline-flex; align-items:center; gap:7px; }
+    .legend .scroll-hint { margin-left:auto; color:var(--green); font-weight:700; }
+    .legend i { width:10px; height:10px; border-radius:50%; display:inline-block; background:var(--green); }
+    .legend .planned i { background:#fff; border:2px dashed #82908c; }
+    .flow-shell { background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:18px; box-shadow:var(--shadow); overflow:hidden; }
+    .flow-scroll { overflow-x:auto; padding:12px 6px 16px; scrollbar-color:#a9bba9 transparent; }
+    .flow-track { display:flex; align-items:stretch; min-width:1110px; gap:0; }
+    .flow-node { width:174px; flex:0 0 174px; min-height:220px; text-align:left; color:var(--ink); background:#f9faf2; border:1px solid var(--line); border-radius:20px; padding:18px; cursor:pointer; transition:transform .18s, border-color .18s, box-shadow .18s; }
+    .flow-node:hover,.flow-node:focus-visible { transform:translateY(-4px); border-color:var(--green); box-shadow:0 12px 28px #17372f18; outline:none; }
+    .flow-node.active { background:#eaf3e7; border:2px solid var(--green); padding:17px; }
+    .flow-node.planned { border-style:dashed; background:#f3f2eb; }
+    .flow-node .n { display:flex; align-items:center; justify-content:space-between; color:var(--green); font-size:.74rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+    .flow-node.planned .n { color:#707d79; }
+    .node-icon { display:grid; place-items:center; width:44px; height:44px; margin:19px 0 14px; border-radius:14px; background:var(--lime); font-size:22px; }
+    .flow-node.planned .node-icon { background:#e4e6dd; }
+    .flow-node strong { display:block; font-size:1.05rem; line-height:1.2; }
+    .flow-node small { display:block; color:var(--muted); font-size:.85rem; line-height:1.45; margin-top:10px; }
+    .connector { display:grid; place-items:center; flex:0 0 28px; color:#8da195; font-size:20px; }
+    .connector.dashed { color:#a3ada3; }
+    .step-modal { width:min(900px, calc(100% - 28px)); max-width:none; max-height:min(88dvh, 900px); border:1px solid #dce4d8; border-radius:26px; padding:0; color:var(--ink); background:var(--surface); box-shadow:0 30px 100px #0d241e4a; }
+    .step-modal[open] { display:flex; flex-direction:column; }
+    .step-modal::backdrop { background:#102720a8; backdrop-filter:blur(5px); }
+    .modal-head { position:relative; padding:32px 76px 25px 32px; color:#f6f7ed; background:var(--ink); }
+    .modal-kicker { color:var(--lime); font-size:.76rem; letter-spacing:.13em; text-transform:uppercase; font-weight:850; }
+    .modal-head h2 { margin:7px 0 9px; font-size:clamp(1.8rem, 4vw, 2.7rem); }
+    .modal-summary { max-width:720px; color:#c2d0c8; margin:0; font-size:1.04rem; }
+    .modal-status { display:inline-flex; margin-top:16px; border-radius:999px; padding:6px 11px; background:#c9ec711c; color:var(--lime); font-size:.73rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+    .modal-status.planned { color:#ecf0e8; background:#ffffff20; }
+    .modal-close { position:absolute; top:22px; right:23px; width:42px; height:42px; display:grid; place-items:center; border:1px solid #ffffff44; border-radius:50%; background:#ffffff12; color:white; font-size:1.45rem; cursor:pointer; }
+    .modal-content { padding:25px 32px 28px; overflow:auto; flex:1 1 auto; min-height:0; }
+    .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .modal-card { padding:18px 19px; border:1px solid var(--line); border-radius:17px; background:#fcfcf5; }
+    .modal-card h3 { display:flex; align-items:center; gap:9px; margin:0 0 9px; color:var(--green); font-size:.88rem; letter-spacing:.03em; }
+    .modal-card h3 span { display:grid; place-items:center; width:25px; height:25px; border-radius:8px; background:#e5f0d8; font-size:.8rem; }
+    .modal-card p { margin:0; color:#42574f; font-size:.94rem; line-height:1.55; }
+    .modal-card--wide { grid-column:1/-1; background:#eef3e8; border-color:#d4e0d0; }
+    .modal-footer { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:17px 32px 22px; border-top:1px solid var(--line); }
+    .modal-footer small { color:var(--muted); }
+    .modal-nav { display:flex; gap:9px; }
+    .modal-nav button { padding:9px 13px; color:var(--ink); border:1px solid #c7d2c4; border-radius:999px; background:white; font:inherit; font-size:.85rem; font-weight:750; cursor:pointer; }
+    .modal-nav button:hover,.modal-nav button:focus-visible { border-color:var(--green); outline:2px solid #176c4e22; }
+    .reality { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }
+    .reality-card { border-radius:18px; padding:20px; border:1px solid var(--line); background:#fffef8; }
+    .reality-card.now { border-top:4px solid var(--green); }
+    .reality-card.next { border-top:4px dashed #85938d; }
+    .reality-card h3 { margin:0 0 12px; font-size:1.05rem; }
+    .reality-card ul { padding-left:19px; margin:0; color:var(--muted); }
+    .reality-card li+li { margin-top:7px; }
+    .walkthrough { display:grid; grid-template-columns:.88fr 1.12fr; border-radius:26px; overflow:hidden; background:var(--ink); color:#f6f7ed; box-shadow:var(--shadow); }
+    .walk-copy { padding:30px; }
+    .walk-copy .eyebrow { color:var(--lime); }
+    .walk-copy h2 { margin:9px 0 16px; }
+    .walk-copy p { color:#bdcbc4; }
+    .walk-copy .step-list { display:grid; gap:9px; margin-top:23px; }
+    .step-pill { display:flex; align-items:center; gap:11px; padding:9px 12px; background:#ffffff0b; border:1px solid #ffffff17; border-radius:12px; color:#e9efe6; font-size:.9rem; }
+    .step-pill b { display:grid; place-items:center; flex:0 0 25px; height:25px; border-radius:8px; background:#c9ec71; color:var(--ink); font-size:.78rem; }
+    .walk-screen { padding:30px; background:#e8eddf; color:var(--ink); display:grid; align-content:center; gap:12px; }
+    .screen-label { color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-size:.74rem; font-weight:850; }
+    .transcript { background:white; border-radius:16px; padding:17px 19px; border-left:4px solid var(--blue); box-shadow:0 8px 20px #192d1c0b; }
+    .transcript strong { display:block; font-size:.76rem; color:var(--blue); margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
+    .json { overflow:auto; margin:0; padding:16px 18px; border-radius:15px; background:#19372f; color:#dff0c2; font: .83rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .candidate-mini { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border-radius:14px; padding:13px 16px; background:white; border:1px solid #cbd9c4; }
+    .candidate-mini .house { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; background:#e4f0d7; font-size:20px; }
+    .candidate-mini small { display:block; color:var(--muted); }
+    .tag { color:var(--green); background:#eaf3e7; border-radius:999px; padding:5px 9px; font-size:.72rem; font-weight:800; white-space:nowrap; }
+    .improve-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+    .improve-card { padding:21px; border:1px solid var(--line); border-radius:19px; background:var(--surface); }
+    .priority { display:inline-flex; border-radius:999px; padding:4px 9px; color:#fff; background:var(--orange); font-size:.72rem; font-weight:850; letter-spacing:.06em; text-transform:uppercase; }
+    .priority.p2 { background:#9b6a24; }
+    .priority.p3 { background:#526a78; }
+    .improve-card h3 { margin:12px 0 7px; line-height:1.2; }
+    .improve-card p { margin:0; color:var(--muted); font-size:.92rem; }
+    .improve-card .why { display:block; color:var(--green); margin-top:13px; font-size:.82rem; font-weight:740; }
+    .decision-band { display:grid; grid-template-columns:1fr auto; gap:20px; align-items:center; padding:25px 27px; margin:42px 0 64px; background:var(--lime); border-radius:22px; }
+    .decision-band h2 { font-size:1.65rem; margin:0 0 4px; }
+    .decision-band p { margin:0; color:#36503c; }
+    .decision-band .button { background:var(--green); white-space:nowrap; }
+    footer { border-top:1px solid var(--line); padding:21px 0 30px; color:var(--muted); font-size:.83rem; display:flex; justify-content:space-between; gap:16px; }
+    @media (max-width:850px) {
+      .hero,.walkthrough { grid-template-columns:1fr; }
+      .hero { padding-top:45px; gap:28px; }
+      .hero-visual { min-height:300px; }
+      .section-head { display:block; }
+      .section-head p { margin-top:12px; }
+      .legend .scroll-hint { margin-left:0; }
+      .improve-grid { grid-template-columns:1fr 1fr; }
+      .walk-screen { padding:23px; }
+    }
+    @media (max-width:600px) {
+      .wrap { width:min(100% - 28px, 1180px); }
+      .topbar { padding:15px 0; }
+      .top-link { font-size:.82rem; }
+      .hero { padding:40px 0 30px; }
+      h1 { font-size:3.2rem; }
+      .hero-visual { padding:20px; min-height:280px; }
+      .section { padding:35px 0; }
+      .flow-shell { padding:11px; }
+      .modal-head { padding:26px 66px 20px 22px; }
+      .modal-close { top:16px; right:16px; }
+      .modal-content { padding:17px 18px 20px; }
+      .modal-grid { grid-template-columns:1fr; }
+      .modal-card--wide { grid-column:auto; }
+      .modal-footer { padding:15px 18px 18px; align-items:flex-start; flex-direction:column; }
+      .reality,.improve-grid { grid-template-columns:1fr; }
+      .walk-copy,.walk-screen { padding:22px; }
+      .decision-band { grid-template-columns:1fr; padding:22px; margin:30px 0 45px; }
+      .decision-band .button { justify-self:start; }
+      footer { display:block; }
+      footer span { display:block; margin-top:5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <header class="wrap topbar">
+    <a class="brand" href="/"><span class="brand-mark">⌁</span><span>EMLAK ASİSTANI <span style="color:#73827a;font-weight:550">/ SİSTEM HİKÂYESİ</span></span></a>
+    <a class="top-link" href="/">← Mikrofon demosuna dön</a>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <div class="eyebrow">Bir prototipin içinden</div>
+        <h1 id="hero-title">Bir çağrı.<br><em>Doğru ilan.</em></h1>
+        <p class="hero-copy">Arayanın sesinden başlayan akış; Türkçe konuşmayı çözümler, ilan ipuçlarını toplar, örnek portföyde aday arar ve doğru soruyla listeyi daraltır.</p>
+        <div class="hero-actions">
+          <a class="button" href="#akisi-gor">Akışı gör <span aria-hidden="true">↓</span></a>
+          <a class="button secondary" href="#iyilestirme">İyileştirme fikirleri</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="Müşteri konuşmasının ses dalgası ve metne dönüşümü">
+        <div class="visual-top"><span>Canlı çağrı akışı</span><span class="live-dot">Yerel prototip</span></div>
+        <div class="wave" aria-hidden="true">
+          <i style="height:21px"></i><i style="height:46px"></i><i style="height:72px"></i><i style="height:38px"></i><i style="height:90px"></i><i style="height:54px"></i><i style="height:109px"></i><i style="height:63px"></i><i style="height:84px"></i><i style="height:40px"></i><i style="height:99px"></i><i style="height:55px"></i><i style="height:30px"></i><i style="height:77px"></i><i style="height:47px"></i><i style="height:110px"></i><i style="height:62px"></i><i style="height:34px"></i><i style="height:85px"></i><i style="height:44px"></i><i style="height:70px"></i><i style="height:28px"></i><i style="height:54px"></i><i style="height:90px"></i><i style="height:36px"></i><i style="height:66px"></i><i style="height:30px"></i><i style="height:45px"></i><i style="height:80px"></i><i style="height:39px"></i><i style="height:57px"></i><i style="height:25px"></i><i style="height:68px"></i><i style="height:38px"></i><i style="height:52px"></i><i style="height:29px"></i><i style="height:42px"></i><i style="height:22px"></i>
+        </div>
+        <div class="quote-card"><small>Arayanın ipucu</small><strong>“Sahibinden’de 12345678 numaralı ilanı gördüm.”</strong></div>
+        <div class="visual-caption">Ses → metin → ilan adayı</div>
+      </div>
+    </section>
+
+    <section class="section" id="akisi-gor">
+      <div class="section-head">
+        <div><div class="eyebrow">01 / Uçtan uca</div><h2>Çağrı sistemde nasıl ilerliyor?</h2></div>
+        <p>Bir adıma tıkla. Açılan geniş pencerede o adımın girdisini, işleyişini, sonucunu, bugünkü sınırını ve iyileştirme fikrini gör.</p>
+      </div>
+      <div class="legend"><span><i></i> Şu an prototipte</span><span class="planned"><i></i> Gerçek telefon kurulumu için sonraki aşama</span><span class="scroll-hint">Tüm adımları görmek için yana kaydır →</span></div>
+      <div class="flow-shell">
+        <div class="flow-scroll" aria-label="Etkileşimli sistem akış şeması">
+          <div class="flow-track" id="flowTrack">
+            <button class="flow-node active" data-step="caller"><span class="n">01 <span>Girdi</span></span><span class="node-icon">☎</span><strong>Arayan konuşur</strong><small>Mikrofon demosunda tarayıcıdan; gerçek hatta telefon bağlantısı gerekir.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="vad"><span class="n">02 <span>Ses</span></span><span class="node-icon">〰</span><strong>VAD bölümler</strong><small>Silero, konuşma ile sessizlik arasındaki sınırı bulur.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="stt"><span class="n">03 <span>STT</span></span><span class="node-icon">⌨</span><strong>Whisper yazıya çevirir</strong><small>whisper.cpp + Türkçe model, duyulanı metin yapar.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="extract"><span class="n">04 <span>Alanlar</span></span><span class="node-icon">✳</span><strong>Qwen ipuçlarını çıkarır</strong><small>İlan no, kaynak, konum, danışman, oda ve kat.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="memory"><span class="n">05 <span>Oturum</span></span><span class="node-icon">▤</span><strong>Bilgiler birikir</strong><small>Önceki turlar korunur; bilinemeyen alanlar işaretlenir.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="candidates"><span class="n">06 <span>Arama</span></span><span class="node-icon">⌕</span><strong>Adaylar sıralanır</strong><small>Portföy servisi örnek JSON kayıtlarına puan verir.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="question"><span class="n">07 <span>Soru</span></span><span class="node-icon">?</span><strong>Qwen sonraki soruyu seçer</strong><small>Adayları ayıran, önce sorulmamış bir ipucu.</small></button>
+            <span class="connector" aria-hidden="true">→</span>
+            <button class="flow-node" data-step="confirm"><span class="n">08 <span>Doğrulama</span></span><span class="node-icon">✓</span><strong>Arayan doğrular</strong><small>Güçlü aday bulunursa kaydın doğru olup olmadığı sorulur.</small></button>
+            <span class="connector dashed" aria-hidden="true">⇢</span>
+            <button class="flow-node planned" data-step="handoff"><span class="n">09 <span>Sonraki aşama</span></span><span class="node-icon">↗</span><strong>Danışmana aktarım</strong><small>Gerçek telefon, kalıcı kayıt ve WhatsApp bildirimi henüz bağlanmadı.</small></button>
+          </div>
+        </div>
+      </div>
+      <div class="reality">
+        <article class="reality-card now"><h3>Bu prototipte çalışan</h3><ul><li>Tarayıcı mikrofonu ve sessizlik algılama</li><li>Whisper ile Türkçe konuşma tanıma</li><li>Qwen ile yapılandırılmış ilan ipuçları ve takip sorusu</li><li>Örnek portföyde puanlı aday listesi ve onay adımı</li></ul></article>
+        <article class="reality-card next"><h3>Henüz bağlanmamış</h3><ul><li>Gerçek telefon hattı / santral aktarımı</li><li>Kalıcı ofis portföy veritabanı</li><li>Danışmana WhatsApp bildirimi</li><li>Gerçek arayan numarasını çağrıdan alma</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section" id="ornek">
+      <div class="section-head">
+        <div><div class="eyebrow">02 / Bir çağrının içi</div><h2>Söz, kayda nasıl dönüşür?</h2></div>
+        <p>Bu örnek, alanların sistem içinde nasıl temsil edildiğini gösterir. STT metni ve model çıkarımı gerçek konuşmada farklı olabilir.</p>
+      </div>
+      <div class="walkthrough">
+        <div class="walk-copy">
+          <div class="eyebrow">Örnek kayıt · 12345678</div>
+          <h2>İpuçlarını yapılandırılmış bilgiye çevir</h2>
+          <p>İlan numarası tek başına eşleşirse, servis o numaralı örnek kaydı bulur. Numara yoksa oda, kat, konum, danışman ve çevre bilgileri adayları daraltmaya yardım eder.</p>
+          <div class="step-list">
+            <div class="step-pill"><b>1</b> Arayan söyler: “12345678, Kartal, Ankara Caddesi.”</div>
+            <div class="step-pill"><b>2</b> Qwen alanları çıkarır; uygulama önceki turlarla birleştirir.</div>
+            <div class="step-pill"><b>3</b> Örnek portföy sıralanır; bir sonraki ayırt edici soru seçilir.</div>
+          </div>
+        </div>
+        <div class="walk-screen">
+          <div class="screen-label">Qwen'in çıkardığı alanlar · örnek</div>
+          <div class="transcript"><strong>Arayan</strong>“Sahibinden’de 12345678 numaralı ilanı gördüm. Kartal’da, Ankara Caddesi’nde.”</div>
+          <pre class="json">{
+  "listing_number": "12345678",
+  "discovery_channel": "sahibinden",
+  "location": "Kartal, Ankara Caddesi",
+  "room_count": null,
+  "floor_number": null
+}</pre>
+          <div class="candidate-mini"><span class="house">⌂</span><span><strong>12345678 · Satılık daire</strong><small>Kartal · Ayşe Hanım · 2+1 · 3. kat</small></span><span class="tag">Numarayla aday</span></div>
+          <div class="screen-label">Sonraki cevap: “Aradığınız ilan bu mu?” diye doğrula</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="iyilestirme">
+      <div class="section-head">
+        <div><div class="eyebrow">03 / Nereden iyileştirelim?</div><h2>Öneriler: en görünür sorundan başlayalım</h2></div>
+        <p>Bunlar yapılmış işler değil; mevcut tasarıma bakarak sıraladığım öneriler. Önce birini seçip gerekçesini birlikte kararlaştırabiliriz.</p>
+      </div>
+      <div class="improve-grid">
+        <article class="improve-card"><span class="priority">P0 · Önce</span><h3>Her turu izlenebilir yap</h3><p>Tek ekranda ham STT, çıkarılan JSON, birikmiş bilgiler, aday puanları, Qwen'in seçtiği soru ve son arama sonucunu yan yana göster.</p><span class="why">Neden: Hata hangi adımda başladı, tahmin etmek yerine görürüz.</span></article>
+        <article class="improve-card"><span class="priority">P0 · Önce</span><h3>Portföy puanını açıklanabilir kıl</h3><p>Her adayda “danışman eşleşti”, “kat eşleşti”, “ilan türü çelişti” gibi gerekçeler göster; güçlü ve çelişen ipuçlarını ayır.</p><span class="why">Neden: Yanlış adayı neden üste koyduğunu anlayabiliriz.</span></article>
+        <article class="improve-card"><span class="priority p2">P1 · Sonra</span><h3>Kararsız duyulan bilgiyi teyit et</h3><p>STT “üçüncü kat” gibi kritik bir ayrıntıda emin değilse, bunu kesin bilgi gibi aramaya katmak yerine kısa bir doğrulama iste.</p><span class="why">Neden: Bir yanlış alan aday sırasını bozabilir.</span></article>
+        <article class="improve-card"><span class="priority p2">P1 · Sonra</span><h3>Soruyu aday farklarından üret</h3><p>Qwen'e yalnızca ilk birkaç kaydı değil, neden üst sırada olduklarını ve hangi alanlarda ayrıştıklarını da ver.</p><span class="why">Neden: Soru gerçekten listeyi daraltmalı.</span></article>
+        <article class="improve-card"><span class="priority p3">P2 · Daha sonra</span><h3>Veriyi önce yapılandır</h3><p>İlan no, satılık/kiralık, oda düzeni ve kat için kesin filtreler; adres ve serbest notlar için toleranslı arama kullan.</p><span class="why">Neden: Her bilgi aynı tür arama yöntemiyle eşleşmez.</span></article>
+        <article class="improve-card"><span class="priority p3">P2 · Daha sonra</span><h3>Gerçek hat ve danışman aktarımı</h3><p>Tarayıcı demosu kararlı olduktan sonra telefon/santral, kalıcı veritabanı ve WhatsApp aktarımını ayrı ayrı bağla.</p><span class="why">Neden: Sesli akış ile iş akışı hatalarını birbirine karıştırmayız.</span></article>
+      </div>
+    </section>
+
+    <section class="decision-band">
+      <div><h2>İlk inceleme adımı</h2><p>Önce tek bir konuşmada STT metnini ve Qwen JSON'unu doğrula. Doğruysa aday puanlarına, sonra soruya geç.</p></div>
+      <a class="button" href="/#textTest">Mikrofon demosunu aç <span aria-hidden="true">↗</span></a>
+    </section>
+  </main>
+  <dialog class="step-modal" id="stepModal" aria-labelledby="modalTitle" aria-describedby="modalSummary">
+    <div class="modal-head">
+      <div class="modal-kicker" id="modalKicker">Adım 01 · Girdi</div>
+      <h2 id="modalTitle">Arayan konuşur</h2>
+      <p class="modal-summary" id="modalSummary"></p>
+      <span class="modal-status" id="modalStatus">Prototipte</span>
+      <button class="modal-close" id="modalClose" type="button" aria-label="Pencereyi kapat">×</button>
+    </div>
+    <div class="modal-content"><div class="modal-grid" id="modalGrid"></div></div>
+    <div class="modal-footer">
+      <small>Önceki / sonraki adımla devam edebilirsin.</small>
+      <div class="modal-nav"><button id="modalPrev" type="button">← Önceki</button><button id="modalNext" type="button">Sonraki →</button></div>
+    </div>
+  </dialog>
+  <footer class="wrap"><strong>Emlak Telefon Asistanı · Yerel prototip</strong><span>Örnek portföy verileri kurgusaldır. Telefon ve WhatsApp aktarımı henüz etkin değildir.</span></footer>
+
+  <script>
+    const stepDetails = {
+      caller: {
+        label: "Adım 01 · Girdi", title: "Arayan konuşur", status: "Prototipte · tarayıcı mikrofonu",
+        summary: "Sisteme ilk gelen şey telefon numarası veya ilan kaydı değil, arayanın sesi. Şu an bunu gerçek bir hat yerine tarayıcı mikrofonuyla deniyoruz.",
+        input: "Tarayıcıdan alınan mikrofon sesi. Kullanıcı mikrofon iznini, dinleme düğmesine bastığında verir.",
+        process: "Tarayıcı sesi 16 kHz, mono PCM kareleri halinde yerel STT servisine gönderir. Bu sayfa Bluetooth telefon bağlantısı veya santral çağrısı almıyor.",
+        output: "Canlı ses kareleri. Bir sonraki adım bunların konuşma mı sessizlik mi olduğunu izler.",
+        limit: "Gerçek çağrı sesi, arayan numarası ve telefon görüşmesi kontrolü henüz bu tarayıcı demosunda yok.",
+        improve: "Tarayıcı akışı kararlı olduktan sonra santral/telefon bağlantısını ayrı bir entegrasyon olarak ekle; test ekranını çağrı altyapısından bağımsız tut."
+      },
+      vad: {
+        label: "Adım 02 · Ses bölütleme", title: "Silero VAD konuşmayı ayırır", status: "Prototipte · yerel ONNX modeli",
+        summary: "VAD, konuşma başlangıcını ve bitişini tahmin eder; Whisper'a ne zaman bir ses parçası göndereceğini belirler.",
+        input: "16 kHz ses akışı. Tarayıcıdan gelen ses 512 örneklik küçük karelerle değerlendirilir.",
+        process: "Silero VAD ONNX modeli her kare için konuşma olasılığı verir. Varsayılan ayarda yaklaşık 1 saniyelik sessizlik bir bölümü bitirir; 250 ms'den kısa/belirsiz konuşma parçaları atılır.",
+        output: "Whisper'a gönderilmek üzere tamamlanmış bir konuşma parçası veya gürültü olduğu düşünülen ve atılan bir parça.",
+        limit: "Arayanın düşünme duraklamaları ile cümle sonu birbirine benzeyebilir. Gürültü eşiği çok hassassa konuşmayı böler; çok gevşekse boş sesi de işler.",
+        improve: "Farklı konuşma hızlarında kısa bir kayıt setiyle sessizlik süresini ve eşiği ölç; kesilen/atlanan parçaları zaman damgasıyla görünür yap."
+      },
+      stt: {
+        label: "Adım 03 · STT", title: "Whisper sesi Türkçe metne çevirir", status: "Prototipte · whisper.cpp",
+        summary: "Bu aşama yalnızca duyulan sözcükleri metne dönüştürür. İlanı bulmaya veya sonraki soruya karar vermez.",
+        input: "VAD'in tamamlandı dediği WAV parçası; yerel large-v3-turbo Whisper modeli ve emlak terimlerini içeren başlangıç istemi.",
+        process: "FastAPI STT servisi parça başına whisper.cpp çalıştırıcısını çağırır. Dönen Türkçe metin görüşme ekranına eklenir ve Qwen çıkarımına aktarılır.",
+        output: "Örneğin “üçüncü kattaydı” veya “12345678 numaralı ilan” gibi düz yazı. Bu çıktı henüz doğrulanmış ilan alanı değildir.",
+        limit: "Rakamlar, özel isimler ve benzer sesli kelimeler yanlış duyulabilir. Tek bir yanlış kat/ilan numarası sonraki aday sırasını değiştirebilir.",
+        improve: "Ham STT metnini çıkarılan JSON ile yan yana tut. Kritik sayı belirsizse arayana tekrar ettir veya onaylat; sessizce düzeltme yapma."
+      },
+      extract: {
+        label: "Adım 04 · Alan çıkarımı", title: "Qwen konuşmayı ilan alanlarına dönüştürür", status: "Prototipte · yerel Qwen",
+        summary: "Qwen'in görevi bu turda konuşmada açıkça geçen bilgileri yapılandırılmış JSON alanlarına ayırmaktır.",
+        input: "O ana kadar birikmiş arayan transkripti ve sabit JSON şeması.",
+        process: "Yerel Qwen3-4B-Instruct modeli JSON biçiminde ilan numarası, kaynak, konum/adres, danışman, satılık/kiralık, mülk türü, room_count, floor_number, other_clues, note ve bilinmeyen alanları çıkarır.",
+        output: "Uygulamanın kullanabileceği alanlar. Örneğin 2+1 düzeni room_count, sayısal kat floor_number olur; örnek portföy aramasını Qwen'in kendisi yapmaz.",
+        limit: "STT hatası Qwen'e yanlış metin verir. Model ayrıca söylenmemiş bilgiyi tahmin edebilir veya oda/kat ipucunu serbest nota bırakabilir.",
+        improve: "Her tur için ham metin, son JSON ve birikmiş JSON'u karşılaştır. Alan başına güven/kanıt ekle ve düzeltme ifadelerinde eski değerin güncellenmesini görünür kıl."
+      },
+      memory: {
+        label: "Adım 05 · Görüşme durumu", title: "Önceki turlar korunur", status: "Prototipte · geçici tarayıcı belleği",
+        summary: "Arayan bir bilgiyi farklı turlarda verdikçe sistem yeni alanları önceki bilgilerle birleştirir.",
+        input: "Qwen'in bu turda çıkardığı alanlar, önceki alanlar, arayanın son cümlesi ve asistanın önceki soruları.",
+        process: "Tarayıcı JavaScript'i boş gelen alanlarda önceki değerleri korur, other_clues listesini birleştirir ve “bilmiyorum/hatırlamıyorum/tanımıyorum” gibi ifadeleri kurallarla işaretler.",
+        output: "Aday sıralaması ve sonraki soru için kullanılan geçici görüşme özeti.",
+        limit: "Durum sayfa belleğinde tutulur; yenileme/sıfırlama ile silinir. Türkçe bilinmiyor ifadelerini yakalayan kurallar bütün söyleyişleri kapsamayabilir.",
+        improve: "Her alanın kaynağını ve zamanını sakla; arayan önceki bilgiyi düzeltiyorsa hangi değerin değiştiğini kaydet. Oturum sıfırlama davranışını ayrıca açıklaştır."
+      },
+      candidates: {
+        label: "Adım 06 · Aday arama", title: "Portföy servisi kayıtları puanlar", status: "Prototipte · örnek JSON",
+        summary: "Bu bileşen gerçek ofis veritabanı değil; sample_listings.json içindeki kurgu kayıtlar üzerinde çalışan küçük bir arama prototipidir.",
+        input: "Birikmiş ilan alanları ve örnek kayıtların ilan numarası, işlem türü, adresi, danışmanı, oda düzeni, katı, notu ve yakın çevresi.",
+        process: "Açıkça söylenen satılık/kiralık türü arama havuzuna kesin filtre uygular. Diğer eşleşmeler alan katkılarıyla hesaplanır; kat gibi açık bir çelişki puanı düşürür.",
+        output: "Her adayın kabul puanı yüzdelik biçimde ve katkı alanlarıyla gösterilir. Tek ve eşsiz en iyi kayıt %65 veya üstüne çıkarsa kabul edilir. Tam ilan numarası eşleşmesi %90, danışman adı eşleşmesi %80'dir; danışman ve satılık/kiralık bilgisi farklı kayıtları havuzdan çıkarır.",
+        limit: "Bu yüzdeler ölçülmüş istatistiksel olasılık değil, açıklanabilir prototip puanıdır. Bu prototipte PostgreSQL, pgvector veya RAG çalışmıyor.",
+        improve: "Gerçek arayan/ofis kayıtlarıyla ağırlıkları ölç; yanlış eşleşme ve kaçırılan eşleşme örneklerine göre her alan katkısını yeniden ayarla."
+      },
+      question: {
+        label: "Adım 07 · Takip sorusu", title: "Qwen adayları daraltacak soruyu seçer", status: "Prototipte · ikinci Qwen çağrısı",
+        summary: "Aday bulunduğunda değil, eşleşme belirsizken bir sonraki ayırt edici bilgiyi istemek için ikinci bir Qwen isteği yapılır.",
+        input: "Tüm arayan metni, bilinen/bilinmeyen alanlar, önceki asistan soruları ve en çok on örnek adayın alan değerleri.",
+        process: "Sistem her aday alanında değerlerin nasıl dağıldığını çıkarır. Qwen yalnızca cevaplanabilir, daha önce sorulmamış ve adaylar arasında fark yaratan alanlardan birini seçip tek Türkçe soru üretir.",
+        output: "Müşteriye gösterilen ve TTS açıksa seslendirilen takip sorusu. Sonraki turda arayan cevabı tekrar çıkarım ve aramaya girer.",
+        limit: "Her konuşma turunda iki Qwen çağrısı yapılır; bu gecikmeyi artırır. Basit aday puanı bir kaydı yanlışlıkla üst sıraya çıkarabilir; örnek veri de gerçek portföy değildir.",
+        improve: "Her soru sonrasında aday sayısının gerçekten azalıp azalmadığını ölç; aynı kalan soruları soru seçimi örneklerine ekle."
+      },
+      confirm: {
+        label: "Adım 08 · Aday onayı", title: "Arayan doğru ilanı doğrular", status: "Prototipte · örnek kayıtla",
+        summary: "Arama servisi bir güçlü aday bulduğunda kaydı müşteriye anlatır ve bu mülk olup olmadığını sorar.",
+        input: "İlan numarasıyla veya yeterli kimlik/destek ipucuyla bulunan bir örnek kayıt.",
+        process: "Arayan evet derse görüşme adı ve geri arama numarası toplamaya geçer. Hayır derse bu aday o görüşmede dışlanır ve yeni ipucu istenir.",
+        output: "Onaylanmış aday ile tarayıcı belleğinde geçici ad/geri arama özeti.",
+        limit: "Mikrofon demosunda arayan numarası çağrıdan gelmez; test için numara elle istenir. Bu bilgiler danışmana henüz otomatik iletilmez.",
+        improve: "Onay sorusunda yalnız kayıttaki ayırt edici bilgileri (ör. ilçe, oda, kat) kısa oku; onay/ret ve sonraki durum geçişlerini test senaryolarında ölç."
+      },
+      handoff: {
+        label: "Adım 09 · Danışmana aktarım", title: "Geri arama görevi danışmana gider", status: "Hedef · henüz bağlanmadı",
+        summary: "Hedef iş akışında arayan ilanı doğrular, iletişim bilgisini bırakır ve sorumlu danışman geri arama yapar.",
+        input: "Doğrulanmış ilan, arayanın adı ve gerçek telefon görüşmesinden alınan arayan numarası.",
+        process: "Görüşme özeti doğru danışmana ve ofise iletilir. Önceki kararlarımızda kanal WhatsApp olarak seçilmişti.",
+        output: "Danışmana atanmış geri arama talebi ve ofis için takip edilebilir kayıt.",
+        limit: "Gerçek telefon/santral entegrasyonu, kalıcı ofis veritabanı ve WhatsApp sağlayıcısı prototipe bağlı değil; şu an mesaj gönderilmiyor.",
+        improve: "Bu aşamaya geçmeden önce alıcı eşlemesi, tekrar gönderim, teslimat hatası ve kişisel verilerin saklama süresini kararlaştır."
+      }
+    };
+    const nodes = [...document.querySelectorAll(".flow-node")];
+    const modal = document.querySelector("#stepModal");
+    const modalGrid = document.querySelector("#modalGrid");
+    const orderedKeys = nodes.map(node => node.dataset.step);
+    let currentStepIndex = 0;
+
+    function renderStepModal(stepKey) {
+      currentStepIndex = orderedKeys.indexOf(stepKey);
+      const step = stepDetails[stepKey];
+      const node = nodes[currentStepIndex];
+      nodes.forEach(item => {
+        const active = item === node;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-expanded", String(active && modal.open));
+      });
+      document.querySelector("#modalKicker").textContent = step.label;
+      document.querySelector("#modalTitle").textContent = step.title;
+      document.querySelector("#modalSummary").textContent = step.summary;
+      const status = document.querySelector("#modalStatus");
+      status.textContent = step.status;
+      status.classList.toggle("planned", step.status.startsWith("Hedef"));
+      const sections = [
+        ["⇢", "Gelen bilgi", step.input],
+        ["⚙", "İşleyiş", step.process],
+        ["✓", "Üretilen sonuç", step.output],
+        ["!", "Bugünkü sınır", step.limit],
+        ["↗", "İyileştirme fırsatı", step.improve]
+      ];
+      modalGrid.replaceChildren();
+      for (const [icon, title, text] of sections) {
+        const card = document.createElement("article");
+        card.className = `modal-card${title === "İyileştirme fırsatı" ? " modal-card--wide" : ""}`;
+        const heading = document.createElement("h3");
+        const marker = document.createElement("span"); marker.textContent = icon;
+        heading.append(marker, document.createTextNode(title));
+        const paragraph = document.createElement("p"); paragraph.textContent = text;
+        card.append(heading, paragraph); modalGrid.append(card);
+      }
+      document.querySelector("#modalPrev").disabled = currentStepIndex === 0;
+      document.querySelector("#modalNext").disabled = currentStepIndex === orderedKeys.length - 1;
+    }
+
+    nodes.forEach(node => {
+      node.setAttribute("aria-haspopup", "dialog");
+      node.setAttribute("aria-controls", "stepModal");
+      node.setAttribute("aria-expanded", "false");
+      node.addEventListener("click", () => {
+        renderStepModal(node.dataset.step);
+        modal.showModal();
+        node.setAttribute("aria-expanded", "true");
+      });
+    });
+    document.querySelector("#modalClose").addEventListener("click", () => modal.close());
+    modal.addEventListener("click", event => { if (event.target === modal) modal.close(); });
+    modal.addEventListener("close", () => nodes.forEach(node => node.setAttribute("aria-expanded", "false")));
+    document.querySelector("#modalPrev").addEventListener("click", () => {
+      if (currentStepIndex > 0) renderStepModal(orderedKeys[currentStepIndex - 1]);
+    });
+    document.querySelector("#modalNext").addEventListener("click", () => {
+      if (currentStepIndex < orderedKeys.length - 1) renderStepModal(orderedKeys[currentStepIndex + 1]);
+    });
+  </script>
+</body>
+</html>

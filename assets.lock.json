@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "runtimes": {
+    "llama": {
+      "url": "https://github.com/ggml-org/llama.cpp.git",
+      "revision": "cd959bae99ff4bed22bef2604f45241c09bbb8c8",
+      "version": "v0.9.0",
+      "target": "llama-server"
+    },
+    "whisper": {
+      "url": "https://github.com/ggml-org/whisper.cpp.git",
+      "revision": "d1be6fde11ac6e0407606b4e42fe72d34add8037",
+      "version": "v1.9.5",
+      "target": "whisper-cli"
+    },
+    "freya": {
+      "url": "https://github.com/freyavoiceai/FreyaTTS.git",
+      "revision": "146d36c1cb6660646be57d31339db4eed9315de3"
+    }
+  },
+  "models": {
+    "qwen": {
+      "url": "https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/a06e946bb6b655725eafa393f4a9745d460374c9/Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+      "path": "qwen/model.gguf",
+      "sha256": "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597",
+      "size": 2497281120,
+      "source": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+      "revision": "a06e946bb6b655725eafa393f4a9745d460374c9"
+    },
+    "whisper": {
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-large-v3-turbo.bin",
+      "path": "whisper/model.bin",
+      "sha256": "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
+      "size": 1624555275,
+      "source": "ggerganov/whisper.cpp",
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1"
+    },
+    "freya": {
+      "url": "https://huggingface.co/freyavoice/Freya-TTS/resolve/d124e07493615208f58bdd21d432736849ee4230/model.safetensors",
+      "path": "freya/model.safetensors",
+      "sha256": "9e5828ce9eb6aaf197adc5cb098e2e80e8ff301d238add631418c5557fa08b22",
+      "size": 732811956,
+      "source": "freyavoice/Freya-TTS",
+      "revision": "d124e07493615208f58bdd21d432736849ee4230"
+    },
+    "audiovae": {
+      "url": "https://huggingface.co/openbmb/VoxCPM2/resolve/32279effe8c19989596f05d353d1447f51d9e915/audiovae.pth",
+      "path": "freya/audiovae.pth",
+      "sha256": "94b5d51e107e0507d4acc976cfdadb64edd6fd06d1f751dadbf2fd1594274bf1",
+      "size": 376951122,
+      "source": "openbmb/VoxCPM2",
+      "revision": "32279effe8c19989596f05d353d1447f51d9e915"
+    },
+    "silero": {
+      "url": "https://raw.githubusercontent.com/snakers4/silero-vad/v6.2.2/src/silero_vad/data/silero_vad.onnx",
+      "path": "silero/model.onnx",
+      "sha256": "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3",
+      "size": 2327524
+    },
+    "freya_config": {
+      "url": "https://huggingface.co/freyavoice/freya-tts/resolve/d124e07493615208f58bdd21d432736849ee4230/config.json",
+      "path": "freya/config.json",
+      "sha256": "898c9a951a20f960e0936d4e222c2a4044d383f5691efa1a614d812812956a67",
+      "size": 92
+    }
+  }
+}

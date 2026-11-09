@@ -1,0 +1,122 @@
+[
+  {
+    "listing_number": "12345678",
+    "transaction_type": "satılık",
+    "location": "Kartal, Ankara Caddesi",
+    "address": "İstanbul, Kartal, Orhantepe Mahallesi, Ankara Caddesi No: 18, Daire: 6",
+    "property_type": "daire",
+    "room_count": "2+1",
+    "floor_number": 3,
+    "consultant_name": "Ayşe Hanım",
+    "note": "Binada asansör ve kapalı otopark var; yakınında market ve sahil yolu bulunuyor.",
+    "nearby_features": ["market", "sahil yolu"]
+  },
+  {
+    "listing_number": "87654321",
+    "transaction_type": "kiralık",
+    "location": "Kadıköy, Moda",
+    "address": "İstanbul, Kadıköy, Caferağa Mahallesi, Moda Caddesi No: 24, Daire: 3",
+    "property_type": "daire",
+    "room_count": "1+1",
+    "floor_number": null,
+    "consultant_name": "Mehmet Bey",
+    "note": "Bahçe katında. Binanın ortak bahçesi var; Moda sahiline ve otobüs duraklarına yürüme mesafesinde.",
+    "nearby_features": ["Moda sahili", "otobüs durağı"]
+  },
+  {
+    "listing_number": "11223344",
+    "transaction_type": "satılık",
+    "location": "Üsküdar, Bağlarbaşı",
+    "address": "İstanbul, Üsküdar, Bağlarbaşı Mahallesi, Gündoğumu Sokak No: 12, Daire: 10",
+    "property_type": "daire",
+    "room_count": "3+1",
+    "floor_number": 5,
+    "consultant_name": "Zeynep Hanım",
+    "note": "Kapalı otopark. Binada asansör var; yakınında okul, eczane ve otobüs durağı bulunuyor.",
+    "nearby_features": ["okul", "eczane", "otobüs durağı"]
+  },
+  {
+    "listing_number": "22334455",
+    "transaction_type": "kiralık",
+    "location": "Pendik, Yenişehir",
+    "address": "İstanbul, Pendik, Yenişehir Mahallesi, Millet Caddesi No: 7, Daire: 5",
+    "property_type": "daire",
+    "room_count": "2+1",
+    "floor_number": 2,
+    "consultant_name": "Ali Bey",
+    "note": "Binada asansör ve açık otopark var; metro istasyonuna ve alışveriş merkezine yakın.",
+    "nearby_features": ["metro istasyonu", "alışveriş merkezi"]
+  },
+  {
+    "listing_number": "33445566",
+    "transaction_type": "satılık",
+    "location": "Maltepe, Altayçeşme",
+    "address": "İstanbul, Maltepe, Altayçeşme Mahallesi, Gül Sokak No: 31",
+    "property_type": "villa",
+    "room_count": "4+1",
+    "floor_number": null,
+    "consultant_name": "Elif Hanım",
+    "note": "Bahçeli, müstakil giriş. Bahçede depo alanı var; yakınında park ve minibüs durağı bulunuyor.",
+    "nearby_features": ["park", "minibüs durağı"]
+  },
+  {
+    "listing_number": "44556677",
+    "transaction_type": "kiralık",
+    "location": "Ataşehir, İçerenköy",
+    "address": "İstanbul, Ataşehir, İçerenköy Mahallesi, Ihlamur Sokak No: 9, Daire: 28",
+    "property_type": "daire",
+    "room_count": "1+1",
+    "floor_number": 7,
+    "consultant_name": "Ayşe Hanım",
+    "note": "Balkonlu. Binada güvenlik ve kapalı otopark var; çevresinde marketler ve otobüs durakları bulunuyor.",
+    "nearby_features": ["market", "otobüs durağı"]
+  },
+  {
+    "listing_number": "55667788",
+    "transaction_type": "satılık",
+    "location": "Beşiktaş, Etiler",
+    "address": "İstanbul, Beşiktaş, Etiler Mahallesi, Nispetiye Caddesi No: 22, Daire: 14",
+    "property_type": "daire",
+    "room_count": "3+1",
+    "floor_number": 9,
+    "consultant_name": "Selin Hanım",
+    "note": "Site içinde. Binada asansör ve güvenlik var; yakınında metro istasyonu ve park bulunuyor.",
+    "nearby_features": ["metro istasyonu", "park"]
+  },
+  {
+    "listing_number": "66778899",
+    "transaction_type": "satılık",
+    "location": "Bakırköy, Ataköy",
+    "address": "İstanbul, Bakırköy, Ataköy 7-8-9-10. Kısım, Örnek Sokak No: 4, Daire: 18",
+    "property_type": "daire",
+    "room_count": "2+1",
+    "floor_number": 4,
+    "consultant_name": "Ahmet Bey",
+    "note": "Deniz manzaralı. Binada asansör var; sahil yürüyüş yoluna ve markete yakın.",
+    "nearby_features": ["sahil yürüyüş yolu", "market"]
+  },
+  {
+    "listing_number": "77889900",
+    "transaction_type": "kiralık",
+    "location": "Sarıyer, İstinye",
+    "address": "İstanbul, Sarıyer, İstinye Mahallesi, Denizyolu Caddesi No: 16",
+    "property_type": "villa",
+    "room_count": "5+2",
+    "floor_number": null,
+    "consultant_name": "Canan Hanım",
+    "note": "Geniş bahçe, otoparklı. Bahçede veranda var; yakınında koru ve sahil yolu bulunuyor.",
+    "nearby_features": ["koru", "sahil yolu"]
+  },
+  {
+    "listing_number": "88990011",
+    "transaction_type": "satılık",
+    "location": "Çekmeköy, Taşdelen",
+    "address": "İstanbul, Çekmeköy, Taşdelen Mahallesi, Lale Sokak No: 2, Daire: 1",
+    "property_type": "daire",
+    "room_count": "2+1",
+    "floor_number": 0,
+    "consultant_name": "Kerem Bey",
+    "note": "Otoparklı. Binada asansör var; yakınında aile sağlığı merkezi, park ve market bulunuyor.",
+    "nearby_features": ["park", "aile sağlığı merkezi", "market"]
+  }
+]
