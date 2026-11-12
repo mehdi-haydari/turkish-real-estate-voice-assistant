@@ -268,6 +268,10 @@ async def preview_candidates(request: SearchRequest) -> CandidatePreviewResponse
                 consensus_fields={"consultant_name": exact_records[0].consultant_name},
                 accepted_listing_number=exact_records[0].listing_number,
             )
+        # An explicit, unmatched ID must not silently become a heuristic search.
+        return CandidatePreviewResponse(
+            candidates=[], has_clues=True, consensus_fields={}, accepted_listing_number=None,
+        )
     records = _filter_by_explicit_transaction_type(records, request)
     records = _filter_by_explicit_consultant(records, request)
     has_clues = bool(

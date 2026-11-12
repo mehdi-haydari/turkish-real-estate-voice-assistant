@@ -16,3 +16,7 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_*.py' -v
       - run: node --test tests/dialogue.test.cjs
       - run: ./setup.sh --dry-run
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run build
+        working-directory: apps/web

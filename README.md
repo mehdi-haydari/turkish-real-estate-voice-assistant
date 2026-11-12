@@ -8,12 +8,16 @@ Built by **Mehdi Heydari** as an applied-AI project: local speech recognition an
 
 ## What it does
 
-- Accepts Turkish speech through a browser microphone, or text through the test panel.
+- Accepts Turkish speech through a standalone React/TypeScript browser call simulator.
 - Extracts listing IDs, source, consultant, location, transaction/property type, room layout, floor and other clues.
 - Looks up exact listing IDs or ranks candidates using transparent, heuristic field scores.
 - Preserves facts and unknown answers across turns; asks questions based on differences between remaining candidates.
 - Requests explicit property confirmation and collects callback details in temporary browser state.
-- Optionally speaks replies using FreyaTTS-small. The browser page also includes an interactive explanation at `/flow`.
+- Speaks Turkish replies through optional FreyaTTS, with caller interruption, requests to repeat, and spoken property details.
+- Collects name and verified phone details, introduces the responsible consultant, prepares an in-memory simulated callback, then closes the conversation.
+- Shows VAD, STT, extraction, search, voice-generation and estimated speech-to-playback timings; **Copy chat** exports the conversation.
+
+The current simulator lives in [`apps/web`](apps/web). The older single-file page and `/flow` remain in the repository as historical references; the legacy dialogue checks exercise that older page.
 
 ## Native installation on macOS
 
@@ -25,13 +29,13 @@ Prerequisites:
 
 - macOS, Python **3.12**, Git, CMake and Apple command-line build tools.
 - Apple Silicon is the intended Metal target. A CPU profile is available for comparison and troubleshooting.
-- Node.js is only required to run the JavaScript regression checks.
+- Node.js 22.12+ and npm for the React/TypeScript browser simulator.
 
 For example, if you already use Homebrew:
 
 ```sh
 xcode-select --install                  # only if the Apple tools are missing
-brew install python@3.12 cmake
+brew install python@3.12 cmake node
 ```
 
 Clone this repository, enter its directory, then:
@@ -43,7 +47,17 @@ PYTHON=python3.12 ./setup.sh --with-tts  # also install local spoken replies
 PYTHON=python3.12 ./run.sh
 ```
 
-Open **http://127.0.0.1:8766**. Enable the microphone only when ready to test; enable spoken replies separately if TTS was installed. Keep the launcher terminal open. Use **Ctrl+C** or `./stop.sh` from another terminal to stop this installation. `./status.sh` reports service readiness; model loading can take time.
+Keep the launcher terminal open. In a second terminal, start the current browser simulator:
+
+```sh
+cd apps/web
+npm ci
+npm run dev
+```
+
+Open **http://127.0.0.1:5173** and select **Start listening**. Voice replies are enabled by default and require installing the optional TTS service; disable **Voice replies** for a text-only run. **Stop** stops microphone input and playback. Use **Ctrl+C** in the frontend terminal to stop Vite, and **Ctrl+C** in the backend launcher or `./stop.sh` to stop the local services. `./status.sh` reports backend readiness; model loading can take time.
+
+The historical browser page is still served by STT at **http://127.0.0.1:8766**. It is not the current React simulator.
 
 ```sh
 PYTHON=python3.12 ./status.sh
@@ -86,7 +100,8 @@ flowchart LR
 
 | Component | Technology | Local port |
 |---|---|---|
-| Browser + speech input | FastAPI, Silero ONNX, whisper.cpp / large-v3-turbo | 8766 |
+| Browser call simulator | React, TypeScript, Vite | 5173 |
+| Speech input | FastAPI, Silero ONNX, whisper.cpp / large-v3-turbo | 8766 |
 | Language model | llama.cpp, Qwen3-4B-Instruct-2507 Q4_K_M | 8768 |
 | Portfolio search | FastAPI, fictional JSON records | 8769 |
 | Optional speech output | FreyaTTS-small, PyTorch, AudioVAE2 | 8770 |
@@ -97,10 +112,12 @@ Services bind to loopback. CORS permits the local demo origin; this is not a pub
 
 - Exact listing number lookup takes priority over similarity scoring.
 - Scores are heuristic contributions, **not calibrated probabilities**. A score of 65 is not a measured 65% chance of correctness.
-- Unknown answers and previous questions constrain follow-up choices. A structured field identifier is validated before accepting an LLM-generated question.
+- The application controls question order and temporary call state. Qwen extracts clues; caller-only evidence constrains source and transaction type. A brief guided retry of the listing ID precedes asking for the consultant's name.
+- The current demo uses ten-digit listing IDs. Invalid-length and unknown IDs are retried without silently becoming unrelated property matches.
+- Repeat requests, listing details, price questions, pauses and callback stages preserve the pending question. Missing price data is stated explicitly. These intent guards remain prototype heuristics and do not cover every utterance.
 - No eligible follow-up is a valid outcome. More questions cannot recover information the caller does not have.
 - Callback details currently live only in browser memory; refreshing clears them. No real consultant is notified. Some dialogue copy simulates a completed callback flow and must not be treated as an actual delivery receipt.
-- Speech processing is not fully streaming end to end: Whisper runs per completed utterance and FreyaTTS returns a complete WAV before playback. Multi-turn extraction and question selection can make two sequential model requests. Latency still needs stage-by-stage measurement.
+- Speech processing is not fully streaming end to end: Whisper runs per completed utterance and FreyaTTS returns a complete WAV before playback. The current React flow uses application-selected questions and one extraction request when needed; numeric responses and callback stages can bypass the LLM. Voice output is generated before playback, and responses over the service limit are split into requests. Cancelling the browser request stops playback but does not guarantee that ongoing server-side synthesis computation stops.
 - PostgreSQL/pgvector, RAG, RabbitMQ, telephony and notification delivery are future work, not implemented features.
 
 See [architecture notes](docs/architecture.md), [third-party sources](THIRD_PARTY_NOTICES.md) and the [initial text evaluation](docs/initial-text-evaluation.md).

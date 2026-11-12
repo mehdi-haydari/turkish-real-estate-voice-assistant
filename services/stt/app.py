@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import wave
 from collections import deque
 from functools import lru_cache
@@ -95,6 +96,8 @@ class SileroStream:
         self.context = np.zeros((1, 64), dtype=np.float32)
         self.current_sample = 0
         self.silence_start: int | None = None
+        self.silence_started_at: float | None = None
+        self.last_silence_started_at: float | None = None
         self.in_speech = False
         self.speech_start_sample: int | None = None
         self.start_candidate_samples = 0
@@ -137,13 +140,17 @@ class SileroStream:
             self.speech_samples += VAD_FRAME_SAMPLES
             if self.silence_start is not None:
                 self.silence_start = None
+                self.silence_started_at = None
 
         if speech_probability < max(VAD_THRESHOLD - 0.15, 0.01) and self.in_speech:
             if self.silence_start is None:
                 self.silence_start = self.current_sample
+                self.silence_started_at = time.perf_counter()
             if self.current_sample - self.silence_start >= self.min_silence_samples:
                 self.in_speech = False
                 self.silence_start = None
+                self.last_silence_started_at = self.silence_started_at
+                self.silence_started_at = None
                 duration = self.speech_samples
                 self.speech_start_sample = None
                 self.speech_samples = 0
@@ -164,11 +171,32 @@ def _transcribe_pcm(pcm_audio: bytes) -> str:
         return _run_whisper(audio_path, root / "transcription")
 
 
-async def _send_transcription(websocket: WebSocket, pcm_audio: bytes) -> None:
+async def _send_transcription(
+    websocket: WebSocket,
+    pcm_audio: bytes,
+    silence_started_at: float | None = None,
+) -> None:
+    endpoint_detected_at = time.perf_counter()
+    endpointing_ms = (
+        round((endpoint_detected_at - silence_started_at) * 1000, 1)
+        if silence_started_at is not None
+        else None
+    )
     await websocket.send_json({"type": "transcribing"})
+    transcription_started_at = time.perf_counter()
     try:
         text = await asyncio.to_thread(_transcribe_pcm, pcm_audio)
-        await websocket.send_json({"type": "transcript", "text": text})
+        completed_at = time.perf_counter()
+        timing = {
+            "endpointing_ms": endpointing_ms,
+            "transcription_ms": round((completed_at - transcription_started_at) * 1000, 1),
+            "total_ms": (
+                round((completed_at - silence_started_at) * 1000, 1)
+                if silence_started_at is not None
+                else None
+            ),
+        }
+        await websocket.send_json({"type": "transcript", "text": text, "timing": timing})
     except HTTPException as exc:
         await websocket.send_json({"type": "error", "message": exc.detail})
     except Exception:
@@ -225,7 +253,9 @@ async def listen_for_speech(websocket: WebSocket) -> None:
                 await websocket.send_json({"type": "speech_start"})
             elif event == "speech_end" and recording:
                 recording = False
-                await _send_transcription(websocket, bytes(utterance))
+                await _send_transcription(
+                    websocket, bytes(utterance), vad.last_silence_started_at
+                )
                 utterance.clear()
                 pre_roll.clear()
             elif event == "speech_discarded" and recording:
